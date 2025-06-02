@@ -1,0 +1,14 @@
+site_name: C3 Data Review App User Documentation
+site_description: User documentation for the C3 data review application
+site_author: MarineSitu Inc.
+site_dir: public
+theme:
+  name: readthedocs
+  logo: /img/favicon.ico
+  favicon: /img/favicon.ico
+extra_css:
+  - style.css
+nav:
+  - Home: index.md
+  - Quick Start: quickstart.md
+  - Measuring and Annotating: annotating.md

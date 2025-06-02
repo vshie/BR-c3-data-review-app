@@ -1,0 +1,53 @@
+body {
+    font-family: "Poppins", sans-serif;
+    color: #0d3151 !important;
+}
+
+.header {
+    font-family: "Poppins", sans-serif !important;
+    color: #ffffff;
+    font-weight: 900 !important;
+    font-size: 20pt;
+}
+
+
+.tabs {
+    background-color: #4499A3 !important;
+    font-weight: normal;
+    font-size: larger;
+    color: white !important;
+    border-top: 1px solid transparent !important;
+    border-left: 1px solid transparent !important;
+    border-right: 1px solid transparent !important;
+    border-bottom: 1px solid transparent !important;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.selected-tabs {
+    background-color: white !important;
+    font-weight: bold;
+    font-size: larger;
+    color: #003153 !important;
+    border-top: 3px solid #f0a120 !important;
+    border-left: solid transparent;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.button {
+    background-color: #4499A3 !important;
+    border: none !important;
+}
+
+.gamboge-switch .form-check-input:checked {
+    background-color: #f0a120 !important;
+    border-color: #f0a120 !important;
+}
+
+/*.catamaran-ms {
+    font-family: "Catamaran", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+} */
