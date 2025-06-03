@@ -2,6 +2,10 @@
 
 For usage, see the official documentation at: [C3 Data Review App](https://c3-data-review-app-157680.gitlab.io/)
 
+
+## Prerequisites
+This system requires docker to be installed
+
 ## Installation
 
 Currently, this runs from building a Dockerfile. 
