@@ -609,6 +609,8 @@ class StereoOakCallbacks:
                 or "shapes" not in rightData
                 or not leftData["shapes"]
                 or not rightData["shapes"]
+                # or not any(["shapes" in key for key in leftData])
+                # or not any(["shapes" in key for key in rightData])
             ):
                 raise PreventUpdate
 
@@ -693,6 +695,7 @@ class StereoOakCallbacks:
                     annotations.append(left_ann)
                     left_fig.add_shape(
                         type="line",
+                        editable=True,
                         x0=left_pts[i * 2][0],
                         y0=left_pts[i * 2][1],
                         x1=left_pts[i * 2 + 1][0],
@@ -713,6 +716,7 @@ class StereoOakCallbacks:
                     annotations.append(right_ann)
                     right_fig.add_shape(
                         type="line",
+                        editable=True,
                         x0=right_pts[i * 2][0],
                         y0=right_pts[i * 2][1],
                         x1=right_pts[i * 2 + 1][0],
@@ -859,6 +863,7 @@ class StereoOakCallbacks:
                                 y0=item["y0"],
                                 x1=item["x1"],
                                 y1=item["y1"],
+                                editable=True,
                                 line=dict(width=2, color="red"),
                                 label=dict(
                                     text=comment,
@@ -896,6 +901,7 @@ class StereoOakCallbacks:
                                 y0=item["y0"],
                                 x1=item["x1"],
                                 y1=item["y1"],
+                                editable=True,
                                 line=dict(width=2, color="red"),
                                 label=dict(
                                     text=comment,

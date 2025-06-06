@@ -849,6 +849,7 @@ class AllOakCallbacks:
                     annotations.append(left_ann)
                     left_fig.add_shape(
                         type="line",
+                        editable=True,
                         x0=left_pts[i * 2][0],
                         y0=left_pts[i * 2][1],
                         x1=left_pts[i * 2 + 1][0],
@@ -869,6 +870,7 @@ class AllOakCallbacks:
                     annotations.append(right_ann)
                     right_fig.add_shape(
                         type="line",
+                        editable=True,
                         x0=right_pts[i * 2][0],
                         y0=right_pts[i * 2][1],
                         x1=right_pts[i * 2 + 1][0],
@@ -1046,6 +1048,7 @@ class AllOakCallbacks:
                         if not left_exists:
                             left_fig.add_shape(
                                 type="rect",
+                                editable=True,
                                 x0=item["x0"],
                                 y0=item["y0"],
                                 x1=item["x1"],
@@ -1083,6 +1086,7 @@ class AllOakCallbacks:
                         if not right_exists:
                             right_fig.add_shape(
                                 type="rect",
+                                editable=True,
                                 x0=item["x0"],
                                 y0=item["y0"],
                                 x1=item["x1"],
@@ -1121,6 +1125,7 @@ class AllOakCallbacks:
                         if not center_exists:
                             center_fig.add_shape(
                                 type="rect",
+                                editable=True,
                                 x0=item["x0"],
                                 y0=item["y0"],
                                 x1=item["x1"],

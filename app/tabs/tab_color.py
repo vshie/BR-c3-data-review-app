@@ -396,6 +396,7 @@ class ColorOakCallbacks:
                                 y0=item["y0"],
                                 x1=item["x1"],
                                 y1=item["y1"],
+                                editable=True,
                                 line=dict(width=2, color="red"),
                                 label=dict(
                                     text=comment,

@@ -53,8 +53,10 @@ config = {
     "modeBarButtonsToAdd": [
         "drawline",
         "drawrect",
+        "eraseshape",
     ],
     "responsive": True,
+    "scrollZoom": True,
 }
 
 #   Initialize tabs
