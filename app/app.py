@@ -1,16 +1,14 @@
-from dash import Dash, html, dcc, callback, Input, Output, State, no_update
+from dash import Dash, html, dcc, Input, Output, State, no_update
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 
 import os
 import numpy as np
 import pandas as pd
-import io
-from PIL import Image, ExifTags
-import plotly.express as px
+from PIL import Image, UnidentifiedImageError
+import plotly.express
 import logging
 from glob import glob
-import platform
 import datetime
 
 # import classes for tabs
@@ -21,7 +19,7 @@ from tabs.universal_callbacks import UniversalCallbacks
 
 import json
 import base64
-from typing import List, Dict, Tuple, Any, Optional, Union
+from typing import List, Dict, Tuple
 from waitress import serve
 
 
@@ -86,7 +84,13 @@ def get_times(files: List[str]) -> List[Dict[str, str]]:
     for file in files:
         try:
             img = Image.open(file)
-        except Exception as e:
+        except (
+            FileNotFoundError,
+            IOError,
+            ValueError,
+            TypeError,
+            UnidentifiedImageError,
+        ) as e:
             logger.error("Malformed image: %s", e)
             continue
         if img.getexif() is not None:
@@ -100,7 +104,7 @@ def get_times(files: List[str]) -> List[Dict[str, str]]:
                         "file": file,
                     }
                 )
-            except Exception as e:
+            except KeyError:
                 logger.warning(
                     "No creation time found in exif data. Trying to parse timestamp from filepath."
                 )
