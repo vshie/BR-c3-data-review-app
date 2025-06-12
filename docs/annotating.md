@@ -8,19 +8,30 @@ To measure an object, first ensure the **Draw Line** tool is selected in the men
 
 ![alt text](img/annotating/1.png)
 
-Then, on both the left and right stereo images, draw a line across the distance you want to measure.
+Then, on both the left and right stereo images, draw a line across the distance you want to measure. These lines can be edited by selecting clicking the line and dragging the endpoints to a new location. Note: Once the line has been measured, it is no longer editable.
 
 ![alt text](img/annotating/2.png)
+
+Lines can be deleted by clicking the line, then clicking **Delete Shape** tool in the menu at the top left of your image.
+
+![alt text](img/annotating/2b.png)
+
+Once you're happy with the location of your line, if you'd like to name or label this line, click the *\<edit name\>* text that should have appeared on your line in the left image and type in your label. Enter or deselect to confirm. This label will be applied to both the left and right lines once measured.
 
 Finally, click **Measure** and your calculated distances will be shown on the lines you drew. These values are also recorded during your session for later download.
 
 ![alt text](img/annotating/3.png)
 
-This can be done with the images either rectified or un-rectified, which can be toggled using the **Rectify Images** switch on the top right of the dashboard
+Object measurement can be done with the images either rectified or un-rectified, which can be toggled using the **Rectify Images** switch on the top right of the dashboard. When drawing lines with rectification on, horizontal guidelines will appear on the opposite stereo image after a line has been drawn to assist with correspondence.
 
 ![alt text](img/annotating/4.png)
 
-Note: These calculations rely on the precision of drawing matching lines in the two images, and the accuracy of the calibration.
+Note: These calculations rely on the precision of drawing matching lines in the two images, and the accuracy of the calibration. 
+
+To toggle off the hover text that states the pixel location and color values, click the **toggleHover** button on the right in the image menu.
+
+![alt text](img/annotating/4b.png)
+
 
 ## Bounding Box Style Annotation
 
