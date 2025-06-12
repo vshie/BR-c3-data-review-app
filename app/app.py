@@ -1,4 +1,4 @@
-from dash import Dash, html, dcc, Input, Output, State, no_update
+from dash import Dash, html, dcc, Input, Output, State, no_update, ctx
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 
@@ -52,9 +52,18 @@ config = {
         "drawline",
         "drawrect",
         "eraseshape",
+        # "select2d"
+        "toggleHover",
     ],
     "responsive": True,
     "scrollZoom": True,
+    "editable": True,
+    "edits": {
+        "annotationText": True,
+        "axisTitleText": False,
+        "titleText": False,
+        "shapePosition": False,
+    },
 }
 
 #   Initialize tabs
@@ -263,6 +272,56 @@ def parse_time_from_files(directory: str) -> Tuple[pd.DataFrame, int]:
     return path_data, num_files
 
 
+def list_directories(root_folder: str):
+    """
+    Creates a list of all directories within a root folder, including nested directories.
+    Paths are relative to the root_folder and the root_folder itself is not included.
+
+    Args:
+        root_folder: The path to the root folder.
+
+    Returns:
+        A list of relative paths to all subdirectories within the root folder, sorted.
+        Returns an empty list if the root_folder does not exist or is not a directory.
+    """
+    if not os.path.isdir(root_folder):
+        return dbc.Input(
+            placeholder="<path>/<to>/<data>/",
+            style={"width": "350px"},
+            id="filepath",
+        )
+
+    excluded_leaf_folders = {
+        "left",
+        "right",
+        "center",
+        "Oak1Left",
+        "Oak1Right",
+        "Oak1Center",
+    }
+    relative_subdirectories = []
+    for dirpath, _, _ in os.walk(root_folder):
+        # Calculate the path relative to the root_folder
+        relative_path = os.path.relpath(dirpath, root_folder)
+
+        # Add to the list if it's not the root_folder itself (represented by ".")
+        if relative_path != ".":
+            # Normalize path separators for consistency
+            normalized_relative_path = relative_path.replace("\\", "/")
+            leaf_folder_name = os.path.basename(normalized_relative_path)
+            if leaf_folder_name not in excluded_leaf_folders:
+                relative_subdirectories.append(normalized_relative_path)
+
+    relative_subdirectories.sort()  # Sort for consistent order
+    return dcc.Dropdown(
+        placeholder="<path>/<to>/<data>/",
+        style={"width": "350px"},
+        id="filepath",
+        options=relative_subdirectories,
+        searchable=True,
+    )
+
+
 app.layout = dbc.Container(
     [
         dbc.Row(
@@ -289,13 +348,7 @@ app.layout = dbc.Container(
                 ),
                 dbc.Col(
                     [
-                        dbc.Row(
-                            dbc.Input(
-                                placeholder="<path>/<to>/<data>/",
-                                style={"width": "350px"},
-                                id="filepath",
-                            )
-                        ),
+                        dbc.Row(list_directories(MOUNT_POINT)),
                         dbc.Row(
                             dcc.Loading(
                                 type="circle",
@@ -514,29 +567,27 @@ def get_data(filepath, n_clicks):
     if n_clicks is None:
         raise PreventUpdate
     else:
-        filepath = resolve_path(filepath)
+        filepath = filepath.replace("\\", "/")
+        if os.path.isdir(MOUNT_POINT):
+            filepath = resolve_path(filepath)
         path_data, num_files = parse_time_from_files(filepath)
         if os.path.exists(filepath):
-            for filename in os.listdir(filepath):
-                # This should specifically point to the name we give the calibrations that we save
-                if filename.endswith(".json"):
-                    try:
-                        with open(os.path.join(filepath, filename), "r") as f:
-                            calibration_data = json.load(f)
-                    except Exception as e:
-                        logger.error("Error reading calibration file: %s", e)
-                        return (
-                            path_data.to_dict(),
-                            no_update,
-                            f"Found {num_files} files.",
-                        )
+            if "calibration.json" in os.listdir(filepath):
+                try:
+                    with open(os.path.join(filepath, "calibration.json"), "r") as f:
+                        calibration_data = json.load(f)
+                except Exception as e:
+                    logger.error("Error reading calibration file: %s", e)
                     return (
                         path_data.to_dict(),
-                        calibration_data,
-                        f"Found {num_files} files.",
+                        no_update,
+                        f"Found {num_files} files. Could not load in calibration.json.",
                     )
-                else:
-                    continue
+                return (
+                    path_data.to_dict(),
+                    calibration_data,
+                    f"Found {num_files} files. Loaded in calibration.json.",
+                )
             return path_data.to_dict(), no_update, f"Found {num_files} files."
         else:
             return None, no_update, "No files found."
@@ -632,6 +683,7 @@ def show_alert(all_alerts, stereo_alerts, color_alerts):
             - is_open (bool): Whether the alert should be open.
             - message (str): The alert message content.
     """
+    # print(ctx.triggered_id)
     if all_alerts is not None:
         return all_alerts["state"], all_alerts["msg"]
     elif stereo_alerts is not None:

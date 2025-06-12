@@ -1,4 +1,15 @@
-from dash import Dash, html, dcc, callback, Input, Output, State, no_update, ctx
+from dash import (
+    Dash,
+    html,
+    dcc,
+    callback,
+    Input,
+    Output,
+    State,
+    no_update,
+    ctx,
+    get_asset_url,
+)
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 from PIL import Image
@@ -13,6 +24,7 @@ from utils.utils import (
     calculate_size,
     undistort_triangulate_pts,
     add_annotations,
+    configure_plots,
 )
 from typing import List, Tuple, Dict, Any, Optional, Union
 
@@ -119,6 +131,7 @@ class StereoOakTab:
                         ),
                         dcc.Store(id="left_shape_{}".format(self.suffix)),
                         dcc.Store(id="right_shape_{}".format(self.suffix)),
+                        dcc.Store(id="shape_names_{}".format(self.suffix)),
                         dbc.Col(
                             html.Div(
                                 id="OakRight_id_{}".format(self.suffix),
@@ -134,6 +147,7 @@ class StereoOakTab:
                             dcc.Graph(
                                 id="OakLeft_{}".format(self.suffix),
                                 responsive=True,
+                                clear_on_unhover=True,
                                 config=self.config,
                                 style={
                                     "width": "100%",
@@ -146,6 +160,7 @@ class StereoOakTab:
                                 id="OakRight_{}".format(self.suffix),
                                 responsive=True,
                                 config=self.config,
+                                clear_on_unhover=True,
                                 style={
                                     "width": "100%",
                                     "height": "70vh",
@@ -247,6 +262,7 @@ class StereoOakCallbacks:
             ),
             Output("left_shape_{}".format(self.suffix), "data", allow_duplicate=True),
             Output("right_shape_{}".format(self.suffix), "data", allow_duplicate=True),
+            Output("alert_state_{}".format(self.suffix), "data", allow_duplicate=True),
             State("data_paths", "data"),
             State("calibration", "data"),
             State("annotations", "data"),
@@ -269,8 +285,13 @@ class StereoOakCallbacks:
                 l_times = pd.to_datetime(path_data["Oak1LeftTimes"])
                 if abs((r_times.iloc[0] - l_times.iloc[0]).total_seconds()) < 0.05:
                     img2 = Image.open(path_data["Oak1Right"].iloc[0])
+                    alert_state = no_update
                 else:
                     img2 = Image.open("assets/MS_Full_White.png")
+                    alert_state = {
+                        "state": True,
+                        "msg": "Could not find right image with timestamp within 5 ms of left image.",
+                    }
                 if rectify:
                     if calibration_data is not None:
                         img1 = undistortrectify(
@@ -282,34 +303,13 @@ class StereoOakCallbacks:
                 fig1 = px.imshow(
                     img1, color_continuous_scale="gray", binary_string=True
                 )
-                fig1.update_layout(
-                    coloraxis_showscale=False,
-                    margin=dict(l=0, r=0, b=0, t=0),
-                    autosize=True,
-                    shapes=[],
-                    annotations=[],
-                )
-                fig1.update_layout(
-                    dragmode="drawline", newshape=dict(line_color="cyan", line_width=1)
-                )
-                fig1.update_xaxes(showticklabels=False)
-                fig1.update_yaxes(showticklabels=False)
+                fig1 = configure_plots(fig1, rectify)
 
                 fig2 = px.imshow(
                     img2, color_continuous_scale="gray", binary_string=True
                 )
-                fig2.update_layout(
-                    coloraxis_showscale=False,
-                    margin=dict(l=0, r=0, b=0, t=0),
-                    autosize=True,
-                    shapes=[],
-                    annotations=[],
-                )
-                fig2.update_layout(
-                    dragmode="drawline", newshape=dict(line_color="cyan", line_width=1)
-                )
-                fig2.update_xaxes(showticklabels=False)
-                fig2.update_yaxes(showticklabels=False)
+                fig2 = configure_plots(fig2, rectify)
+
                 fig1 = add_annotations(
                     annotations,
                     fig1,
@@ -335,6 +335,7 @@ class StereoOakCallbacks:
                     path_data["Oak1Right"].iloc[0],
                     np.array(img1).shape,
                     np.array(img2).shape,
+                    alert_state,
                 )
 
         @self.app.callback(
@@ -348,6 +349,7 @@ class StereoOakCallbacks:
             ),
             Output("left_shape_{}".format(self.suffix), "data", allow_duplicate=True),
             Output("right_shape_{}".format(self.suffix), "data", allow_duplicate=True),
+            Output("alert_state_{}".format(self.suffix), "data", allow_duplicate=True),
             State("data_paths", "data"),
             State("calibration", "data"),
             State("annotations", "data"),
@@ -369,39 +371,21 @@ class StereoOakCallbacks:
             idx = np.argmin(abs(l_times.iloc[index] - r_times))
             if abs((l_times.iloc[index] - r_times.iloc[idx]).total_seconds()) > 0.05:
                 img2 = Image.open("assets/MS_Full_White.png")
+                alert_state = {
+                    "state": True,
+                    "msg": "Could not find right image with timestamp within 5 ms of left image.",
+                }
             else:
                 img2 = Image.open(path_data["Oak1Right"].iloc[idx])
+                alert_state = no_update
             if rectify:
                 if calibration_data is not None:
                     img1 = undistortrectify(np.array(img1), calibration_data, "left")
                     img2 = undistortrectify(np.array(img2), calibration_data, "right")
             fig1 = px.imshow(img1, color_continuous_scale="gray", binary_string=True)
-            fig1.update_layout(
-                coloraxis_showscale=False,
-                margin=dict(l=0, r=0, b=0, t=0),
-                autosize=True,
-                shapes=[],  # Clear existing shapes
-                annotations=[],  # Clear existing annotations
-            )
-            fig1.update_layout(
-                dragmode="drawline", newshape=dict(line_color="cyan", line_width=1)
-            )
-            fig1.update_xaxes(showticklabels=False)
-            fig1.update_yaxes(showticklabels=False)
-
+            fig1 = configure_plots(fig1, rectify)
             fig2 = px.imshow(img2, color_continuous_scale="gray", binary_string=True)
-            fig2.update_layout(
-                coloraxis_showscale=False,
-                margin=dict(l=0, r=0, b=0, t=0),
-                autosize=True,
-                shapes=[],  # Clear existing shapes
-                annotations=[],  # Clear existing annotations
-            )
-            fig2.update_layout(
-                dragmode="drawline", newshape=dict(line_color="cyan", line_width=1)
-            )
-            fig2.update_xaxes(showticklabels=False)
-            fig2.update_yaxes(showticklabels=False)
+            fig2 = configure_plots(fig2, rectify)
             fig1 = add_annotations(
                 annotations,
                 fig1,
@@ -427,6 +411,7 @@ class StereoOakCallbacks:
                 path_data["Oak1Right"].iloc[idx],
                 np.array(img1).shape,
                 np.array(img2).shape,
+                alert_state,
             )
 
         @self.app.callback(
@@ -465,39 +450,21 @@ class StereoOakCallbacks:
             idx = np.argmin(abs(l_times.iloc[index] - r_times))
             if abs((l_times.iloc[index] - r_times.iloc[idx]).total_seconds()) > 0.05:
                 img2 = Image.open("assets/MS_Full_White.png")
+                alert_state = {
+                    "state": True,
+                    "msg": "Could not find right image with timestamp within 5 ms of left image.",
+                }
             else:
                 img2 = Image.open(path_data["Oak1Right"].iloc[idx])
+                alert_state = no_update
             if rectify:
                 if calibration_data is not None:
                     img1 = undistortrectify(np.array(img1), calibration_data, "left")
                     img2 = undistortrectify(np.array(img2), calibration_data, "right")
             fig1 = px.imshow(img1, color_continuous_scale="gray", binary_string=True)
-            fig1.update_layout(
-                coloraxis_showscale=False,
-                margin=dict(l=0, r=0, b=0, t=0),
-                autosize=True,
-                shapes=[],  # Clear existing shapes
-                annotations=[],  # Clear existing annotations
-            )
-            fig1.update_layout(
-                dragmode="drawline", newshape=dict(line_color="cyan", line_width=1)
-            )
-            fig1.update_xaxes(showticklabels=False)
-            fig1.update_yaxes(showticklabels=False)
-
+            fig1 = configure_plots(fig1, rectify)
             fig2 = px.imshow(img2, color_continuous_scale="gray", binary_string=True)
-            fig2.update_layout(
-                coloraxis_showscale=False,
-                margin=dict(l=0, r=0, b=0, t=0),
-                autosize=True,
-                shapes=[],  # Clear existing shapes
-                annotations=[],  # Clear existing annotations
-            )
-            fig2.update_layout(
-                dragmode="drawline", newshape=dict(line_color="cyan", line_width=1)
-            )
-            fig2.update_xaxes(showticklabels=False)
-            fig2.update_yaxes(showticklabels=False)
+            fig2 = configure_plots(fig2, rectify)
             fig1 = add_annotations(
                 annotations,
                 fig1,
@@ -535,7 +502,7 @@ class StereoOakCallbacks:
                     fig2,
                     path_data["Oak1Left"].iloc[index],
                     path_data["Oak1Right"].iloc[idx],
-                    no_update,
+                    alert_state,
                     np.array(img1).shape,
                     np.array(img2).shape,
                 )
@@ -552,10 +519,12 @@ class StereoOakCallbacks:
             State("OakRight_{}".format(self.suffix), "figure"),
             State("OakLeft_id_{}".format(self.suffix), "children"),
             State("OakRight_id_{}".format(self.suffix), "children"),
-            State("OakLeft_{}".format(self.suffix), "relayoutData"),
-            State("OakRight_{}".format(self.suffix), "relayoutData"),
+            # State("OakLeft_{}".format(self.suffix), "relayoutData"),
+            # State("OakRight_{}".format(self.suffix), "relayoutData"),
+            # State("OakLeft_{}".format(self.suffix), "clickData"),
             State("left_shape_{}".format(self.suffix), "data"),
             State("right_shape_{}".format(self.suffix), "data"),
+            State("shape_names_{}".format(self.suffix), "data"),
             Input("size_{}".format(self.suffix), "n_clicks"),
             prevent_initial_call=True,
         )
@@ -567,10 +536,12 @@ class StereoOakCallbacks:
             right_fig,
             left_name,
             right_name,
-            leftData,
-            rightData,
+            # clickData,
+            # leftData,
+            # rightData,
             left_shape,
             right_shape,
+            shape_names,
             n_clicks,
         ):
             """
@@ -602,18 +573,20 @@ class StereoOakCallbacks:
                         "msg": "Looks like you're missing a calibration file. Upload one using the selector above.",
                     },
                 )
-            if leftData is None and rightData is None:
-                raise PreventUpdate
-            if (
-                "shapes" not in leftData
-                or "shapes" not in rightData
-                or not leftData["shapes"]
-                or not rightData["shapes"]
-                # or not any(["shapes" in key for key in leftData])
-                # or not any(["shapes" in key for key in rightData])
-            ):
+            leftData = left_fig["layout"]["shapes"]
+            rightData = right_fig["layout"]["shapes"]
+            if not leftData and not rightData:
                 raise PreventUpdate
 
+            # if (
+            #     "shapes" not in leftData
+            #     or "shapes" not in rightData
+            #     or not leftData["shapes"]
+            #     or not rightData["shapes"]
+            #     # or not any(["shapes" in key for key in leftData])
+            #     # or not any(["shapes" in key for key in rightData])
+            # ):
+            #     raise PreventUpdate
             left_pts = []
             right_pts = []
             left_count = 0
@@ -625,8 +598,12 @@ class StereoOakCallbacks:
             if annotations is None:
                 annotations = []
 
-            for item in leftData["shapes"]:
-                if item["type"] == "line":
+            for item in leftData:
+                if (
+                    item["type"] == "line"
+                    and "editable" in item
+                    and item["editable"] is True
+                ):
                     left_exists = any(
                         ann["name"] == left_name
                         and ann["instrument"] == "Oak1Left"
@@ -638,8 +615,12 @@ class StereoOakCallbacks:
                         left_pts.append([item["x0"], item["y0"]])
                         left_pts.append([item["x1"], item["y1"]])
                         left_count += 1
-            for item in rightData["shapes"]:
-                if item["type"] == "line":
+            for item in rightData:
+                if (
+                    item["type"] == "line"
+                    and "editable" in item
+                    and item["editable"] is True
+                ):
                     right_exists = any(
                         ann["name"] == right_name
                         and ann["instrument"] == "Oak1Right"
@@ -653,7 +634,15 @@ class StereoOakCallbacks:
                         right_count += 1
 
             if left_count != right_count:
-                raise PreventUpdate
+                return (
+                    no_update,
+                    no_update,
+                    no_update,
+                    {
+                        "state": True,
+                        "msg": "Unequal number of measurement lines on left and right images. Can't calculate size.",
+                    },
+                )
 
             if rectify:
                 pts = triangulate_pts(calibration_data, left_pts, right_pts, left_shape)
@@ -664,17 +653,78 @@ class StereoOakCallbacks:
             distances = calculate_size(pts)
 
             # Clear existing shapes before adding new ones
-            left_fig.update_layout(shapes=[])
-            right_fig.update_layout(shapes=[])
+            if left_fig.layout.shapes:
+                left_fig.layout.shapes = [
+                    s
+                    for s in left_fig.layout.shapes
+                    if (
+                        s.name == "measured_shape_left"
+                        or s.name == "saved_shape"
+                        or s.name == "annotated_rect_left"
+                    )
+                ]
+            else:
+                left_fig.layout.shapes = []
+            if right_fig.layout.shapes:
+                right_fig.layout.shapes = [
+                    s
+                    for s in right_fig.layout.shapes
+                    if (
+                        s.name == "measured_shape_right"
+                        or s.name == "saved_shape"
+                        or s.name == "annotated_rect_right"
+                    )
+                ]
+            else:
+                right_fig.layout.shapes = []
+            left_fig.data = [
+                trace
+                for trace in left_fig.data
+                if not (
+                    hasattr(trace, "meta")
+                    and trace.meta
+                    and trace.meta.get("type") == "line_endpoint_marker_left"
+                )
+            ]
+            right_fig.data = [
+                trace
+                for trace in right_fig.data
+                if not (
+                    hasattr(trace, "meta")
+                    and trace.meta
+                    and trace.meta.get("type") == "line_endpoint_marker_right"
+                )
+            ]
+            if left_fig.layout.annotations:
+                left_fig.layout.annotations = [
+                    s
+                    for s in left_fig.layout.annotations
+                    if not (s.name == "line_endpoint_text_left")
+                ]
+            else:
+                left_fig.layout.annotations = []
 
             for i, distance in enumerate(distances):
+                loc = left_pts[i * 2 : i * 2 + 2]
+                text_ann = [
+                    shape_names[ann_key]["name"]
+                    for ann_key in list(shape_names.keys())
+                    if shape_names[ann_key]["loc"]
+                    == [(loc[0][0] + loc[1][0]) / 2, (loc[0][1] + loc[1][1]) / 2]
+                ]
+                if not text_ann:
+                    text_ann = ["<edit name>"]
+                if text_ann[0] == "<edit name>":
+                    text_ann = [""]
+                else:
+                    text_ann[0] = text_ann[0] + ": "
                 left_ann = {
                     "name": left_name,
                     "instrument": "Oak1Left",
                     "type": "distance",
                     "rectified": rectify,
                     "location": left_pts[i * 2 : i * 2 + 2],
-                    "values": distances[i],
+                    "values": text_ann[0] + str(distances[i]) + " m",
                 }
 
                 right_ann = {
@@ -683,7 +733,7 @@ class StereoOakCallbacks:
                     "type": "distance",
                     "rectified": rectify,
                     "location": right_pts[i * 2 : i * 2 + 2],
-                    "values": distances[i],
+                    "values": text_ann[0] + str(distances[i]) + " m",
                 }
                 left_exists = any(
                     ann["name"] == left_name
@@ -695,7 +745,7 @@ class StereoOakCallbacks:
                     annotations.append(left_ann)
                     left_fig.add_shape(
                         type="line",
-                        editable=True,
+                        editable=False,
                         x0=left_pts[i * 2][0],
                         y0=left_pts[i * 2][1],
                         x1=left_pts[i * 2 + 1][0],
@@ -703,8 +753,10 @@ class StereoOakCallbacks:
                         line_width=3,
                         line_color="red",
                         label=dict(
-                            text=str(distances[i]) + " m", font=dict(color="red")
+                            text=text_ann[0] + str(distances[i]) + " m",
+                            font=dict(color="red"),
                         ),
+                        name="measured_shape_left",
                     )
                 right_exists = any(
                     ann["name"] == right_name
@@ -716,7 +768,7 @@ class StereoOakCallbacks:
                     annotations.append(right_ann)
                     right_fig.add_shape(
                         type="line",
-                        editable=True,
+                        editable=False,
                         x0=right_pts[i * 2][0],
                         y0=right_pts[i * 2][1],
                         x1=right_pts[i * 2 + 1][0],
@@ -724,8 +776,10 @@ class StereoOakCallbacks:
                         line_width=3,
                         line_color="red",
                         label=dict(
-                            text=str(distances[i]) + " m", font=dict(color="red")
+                            text=text_ann[0] + str(distances[i]) + " m",
+                            font=dict(color="red"),
                         ),
+                        name="measured_shape_right",
                     )
             return left_fig, right_fig, annotations, no_update
 
@@ -733,14 +787,31 @@ class StereoOakCallbacks:
             Output(
                 "note_modal_{}".format(self.suffix), "is_open", allow_duplicate=True
             ),
+            Output("OakLeft_{}".format(self.suffix), "figure", allow_duplicate=True),
+            Output("OakRight_{}".format(self.suffix), "figure", allow_duplicate=True),
+            Output("shape_names_{}".format(self.suffix), "data", allow_duplicate=True),
             State("annotations", "data"),
             State("OakLeft_id_{}".format(self.suffix), "children"),
             State("OakRight_id_{}".format(self.suffix), "children"),
+            State("OakLeft_{}".format(self.suffix), "figure"),
+            State("OakRight_{}".format(self.suffix), "figure"),
+            State("rectify", "value"),
+            State("shape_names_{}".format(self.suffix), "data"),
             Input("OakLeft_{}".format(self.suffix), "relayoutData"),
             Input("OakRight_{}".format(self.suffix), "relayoutData"),
             prevent_initial_call=True,
         )
-        def open_modal(annotations, left_name, right_name, leftData, rightData):
+        def capture_relayout_events(
+            annotations,
+            left_name,
+            right_name,
+            left_fig,
+            right_fig,
+            rectify,
+            shape_names,
+            leftData,
+            rightData,
+        ):
             """
             Opens the note modal if a new rectangular shape (for commenting) is drawn
             on either the left or right stereo image and that shape
@@ -751,36 +822,205 @@ class StereoOakCallbacks:
                 left_name, right_name: File names of the current left and right images.
                 leftData, rightData: relayoutData from the left and right image figures.
             """
+            left_fig = go.Figure(left_fig)
+            right_fig = go.Figure(right_fig)
             if leftData is None and rightData is None:
                 raise PreventUpdate
-            if "shapes" not in leftData and "shapes" not in rightData:
-                raise PreventUpdate
+
+            modal_should_open = False
+            figure_was_updated = False
+
             if annotations is None:
                 annotations = []
-            if "shapes" in leftData:
-                for item in leftData["shapes"]:
-                    if item["type"] == "rect":
-                        left_exists = any(
-                            ann["name"] == left_name
-                            and ann["instrument"] == "Oak1Left"
-                            and ann["location"]
-                            == [[item["x0"], item["y0"]], [item["x1"], item["y1"]]]
-                            for ann in annotations
-                        )
-                        if not left_exists:
-                            return True
-            if "shapes" in rightData:
-                for item in rightData["shapes"]:
-                    if item["type"] == "rect":
-                        right_exists = any(
-                            ann["name"] == right_name
-                            and ann["instrument"] == "Oak1Right"
-                            and ann["location"]
-                            == [[item["x0"], item["y0"]], [item["x1"], item["y1"]]]
-                            for ann in annotations
-                        )
-                        if not right_exists:
-                            return True
+            if shape_names is None:
+                shape_names = {}
+
+            if leftData and any(k.startswith("annotations[") for k in leftData):
+                k = [k for k in leftData if k.startswith("annotations[")][0]
+                index = int(k.replace("annotations[", " ").replace("].text", " "))
+                left_fig.update_annotations(dict(text=leftData[k]), selector=index)
+                # shape_names.append({"name": leftData[k], "index": index})
+                shape_names[str(index)]["name"] = leftData[k]
+                return (no_update, left_fig, right_fig, shape_names)
+
+            if leftData and (
+                "shapes" in leftData or any(k.startswith("shapes[") for k in leftData)
+            ):
+                figure_was_updated = True
+                left_fig.data = [
+                    trace
+                    for trace in left_fig.data
+                    if not (
+                        hasattr(trace, "meta")
+                        and trace.meta
+                        and trace.meta.get("type") == "line_endpoint_marker_left"
+                    )
+                ]
+                if right_fig.layout.shapes:
+                    right_fig.layout.shapes = [
+                        s
+                        for s in right_fig.layout.shapes
+                        if not (s.name == "left_epipolar_line")
+                    ]
+                else:
+                    right_fig.layout.shapes = []
+                if left_fig.layout.annotations:
+                    left_fig.layout.annotations = [
+                        s
+                        for s in left_fig.layout.annotations
+                        if not (s.name == "line_endpoint_text_left")
+                    ]
+                else:
+                    left_fig.layout.annotations = []
+                # for item in leftData["shapes"]:
+                ann_idx = 0
+                if left_fig.layout.shapes:
+                    for item in left_fig.layout.shapes:
+                        if item.type == "line" and item.editable is True:
+                            left_fig.add_trace(
+                                go.Scatter(
+                                    x=[item["x0"], item["x1"]],
+                                    y=[item["y0"], item["y1"]],
+                                    mode="markers",
+                                    marker=dict(color="cyan", size=8),
+                                    showlegend=False,
+                                    meta={"type": "line_endpoint_marker_left"},
+                                )
+                            )
+                            text_ann = [
+                                shape_names[ann_key]["name"]
+                                for ann_key in list(shape_names.keys())
+                                if shape_names[ann_key]["loc"]
+                                == [
+                                    (item["x0"] + item["x1"]) / 2,
+                                    (item["y0"] + item["y1"]) / 2,
+                                ]
+                            ]
+                            if not text_ann:
+                                text_ann = ["<edit name>"]
+                            left_fig.add_annotation(
+                                x=(item["x0"] + item["x1"]) / 2,
+                                y=(item["y0"] + item["y1"]) / 2,
+                                showarrow=False,
+                                text=text_ann[0],
+                                font=dict(color="cyan"),
+                                name="line_endpoint_text_left",
+                            )
+                            shape_names[str(ann_idx)] = {
+                                "name": text_ann[0],
+                                "loc": [
+                                    (item["x0"] + item["x1"]) / 2,
+                                    (item["y0"] + item["y1"]) / 2,
+                                ],
+                            }
+                            ann_idx += 1
+                            if rectify:
+                                right_fig.add_hline(
+                                    y=item["y0"],
+                                    line=dict(color="blue", dash="dash", width=1),
+                                    editable=False,
+                                    name="left_epipolar_line",
+                                )
+                                right_fig.add_hline(
+                                    y=item["y1"],
+                                    line=dict(color="blue", dash="dash", width=1),
+                                    editable=False,
+                                    name="left_epipolar_line",
+                                )
+                if "shapes" in leftData and isinstance(leftData["shapes"], list):
+                    for item_new in leftData["shapes"]:
+                        if item_new["type"] == "rect":
+
+                            # elif item["type"] == "rect":
+                            left_exists = any(
+                                ann["name"] == left_name
+                                and ann["instrument"] == "Oak1Left"
+                                and ann["location"]
+                                == [
+                                    [item_new["x0"], item_new["y0"]],
+                                    [item_new["x1"], item_new["y1"]],
+                                ]
+                                for ann in annotations
+                            )
+                            if not left_exists:
+                                # return True, left_fig, right_fig
+                                modal_should_open = True
+                                break
+            if rightData and (
+                "shapes" in rightData or any(k.startswith("shapes[") for k in rightData)
+            ):
+                figure_was_updated = True
+                right_fig.data = [
+                    trace
+                    for trace in right_fig.data
+                    if not (
+                        hasattr(trace, "meta")
+                        and trace.meta
+                        and trace.meta.get("type") == "line_endpoint_marker_right"
+                    )
+                ]
+                if left_fig.layout.shapes:
+                    left_fig.layout.shapes = [
+                        s
+                        for s in left_fig.layout.shapes
+                        if not (s.name == "right_epipolar_line")
+                    ]
+                else:
+                    left_fig.layout.shapes = []
+                if right_fig.layout.shapes:
+                    for item in right_fig.layout.shapes:
+                        if item.type == "line" and item.editable is True:
+                            right_fig.add_trace(
+                                go.Scatter(
+                                    x=[item["x0"], item["x1"]],
+                                    y=[item["y0"], item["y1"]],
+                                    mode="markers",
+                                    marker=dict(color="cyan", size=8),
+                                    showlegend=False,
+                                    meta={"type": "line_endpoint_marker_right"},
+                                )
+                            )
+                            if rectify:
+                                left_fig.add_hline(
+                                    y=item["y0"],
+                                    line=dict(color="blue", dash="dash", width=1),
+                                    editable=False,
+                                    name="right_epipolar_line",
+                                )
+                                left_fig.add_hline(
+                                    y=item["y1"],
+                                    line=dict(color="blue", dash="dash", width=1),
+                                    editable=False,
+                                    name="right_epipolar_line",
+                                )
+                if (
+                    not modal_should_open
+                    and "shapes" in rightData
+                    and isinstance(rightData["shapes"], list)
+                ):
+                    for item_new in rightData["shapes"]:
+                        if item_new["type"] == "rect":
+                            right_exists = any(
+                                ann["name"] == right_name
+                                and ann["instrument"] == "Oak1Right"
+                                and ann["location"]
+                                == [
+                                    [item_new["x0"], item_new["y0"]],
+                                    [item_new["x1"], item_new["y1"]],
+                                ]
+                                for ann in annotations
+                            )
+                            if not right_exists:
+                                # return True, no_update, no_update
+                                modal_should_open = True
+                                break
+
+            if modal_should_open:
+                return True, left_fig, right_fig, no_update
+
+            if figure_was_updated:
+                return False, left_fig, right_fig, shape_names
+
             raise PreventUpdate
 
         @self.app.callback(
@@ -863,13 +1103,14 @@ class StereoOakCallbacks:
                                 y0=item["y0"],
                                 x1=item["x1"],
                                 y1=item["y1"],
-                                editable=True,
+                                editable=False,
                                 line=dict(width=2, color="red"),
                                 label=dict(
                                     text=comment,
                                     font=dict(color="red"),
                                     textposition="top left",
                                 ),
+                                name="annotated_rect_left",
                             )
                             annotations.append(left_ann)
             if right_fig.layout.shapes:
@@ -901,13 +1142,14 @@ class StereoOakCallbacks:
                                 y0=item["y0"],
                                 x1=item["x1"],
                                 y1=item["y1"],
-                                editable=True,
+                                editable=False,
                                 line=dict(width=2, color="red"),
                                 label=dict(
                                     text=comment,
                                     font=dict(color="red"),
                                     textposition="top left",
                                 ),
+                                name="annotated_rect_right",
                             )
                             annotations.append(right_ann)
 
