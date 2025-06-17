@@ -501,7 +501,7 @@ def add_annotations(
                                     and shape.y0 == locations[0][1]
                                     and shape.x1 == locations[1][0]
                                     and shape.y1 == locations[1][1]
-                                    and shape.label.text == str(values) + " m"
+                                    and shape.label.text == str(values)
                                 ):
                                     shape_exists = True
                                     break
@@ -515,9 +515,10 @@ def add_annotations(
                                 line_width=3,
                                 line_color="aquamarine",
                                 label=dict(
-                                    text=str(values) + " m",
+                                    text=str(values),
                                     font=dict(color="aquamarine"),
                                 ),
+                                name="saved_shape",
                             )
 
                 elif row["type"] == "comment":
@@ -555,5 +556,34 @@ def add_annotations(
                                     font=dict(color="aquamarine"),
                                     textposition="top left",
                                 ),
+                                name="saved_shape",
                             )
+    return fig
+
+
+def configure_plots(fig, rectify):
+    fig.update_layout(
+        coloraxis_showscale=False,
+        margin=dict(l=0, r=0, b=0, t=0),
+        autosize=True,
+        shapes=[],  # Clear existing shapes
+        annotations=[],  # Clear existing annotations
+        dragmode="drawline",
+        newshape=dict(line_color="cyan", line_width=2),
+        clickmode="event+select",
+        xaxis=dict(domain=[1 * 10**-12, 1]),
+    )
+    fig.update_xaxes(showticklabels=False)
+    fig.update_yaxes(showticklabels=False)
+    # if rectify:
+    #     fig.update_layout(hovermode="y")
+    #     fig.update_yaxes(
+    #         showspikes=True,
+    #         spikemode="across+toaxis",
+    #         showline=True,
+    #         spikesnap="cursor",
+    #         spikethickness=1,
+    #         spikedash="dash",
+    #     )
+
     return fig

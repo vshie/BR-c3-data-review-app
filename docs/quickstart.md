@@ -8,13 +8,17 @@ C3 Data Review App is open-source and will continually be pushing out new featur
 
 See [Home - Installation](index.md#installation) for installation instructions.
 
-Once the C3 Data Review App is installed, open the program and you will be taken to the C3 Data REview Web Application. The first step is to load in your data.
+Once the C3 Data Review App is installed, open the program and you will be taken to the C3 Data Review Web Application. The first step is to load in your data.
 
 ## Loading Data
 
-Loading data is quite simple. Simply enter the directory of your dataset in the input bar and click **Search**. The app will automatically parse the timestamp information and images associated with each of the two stereo and one rgb camera. If your dataset is large, this make take a few moments to complete.
+Loading data is quite simple. 
 
-This process assumes that the image sets are locally available and separated by device (left, center, right). And that either EXIF timestamps are available or the timestamp is simply encoded in the filename by *snapshot-YYYY-MM-DD-HH-MM-SS-MS.jpg*
+If you're running the app in a Docker container, the input bar will be a dropdown of all available folders. Start typing the directory name, and if the folder is mounted correctly, it should be selectable. Select the folder you want, and click **Search**.
+
+If you're running the app locally while within `c3-data-review-app/app`, you will simply enter the absolute path to the directory of your dataset in the input bar and click **Search**.
+
+The app will automatically parse the timestamp information and images associated with each of the two stereo and one rgb camera. If your dataset is large, this make take a few moments to complete. This process assumes that the image sets are locally available and separated by device (left, center, right). And that either EXIF timestamps are available or the timestamp is simply encoded in the filename by *snapshot-YYYY-MM-DD-HH-MM-SS-MS.jpg*
 
 ![alt text](img/quickstart/1.png)
 
@@ -22,7 +26,7 @@ You should see a small text confirmation when your dataset has loaded.
 
 ## Loading a Calibration
 
-Some datasets might have a calibration file already included in the saved directory. In this case - you don't have to do anything, the calibration will automatically be applied. 
+Some datasets might have a calibration file already included in the saved directory, this file is should be named *calibration.json*. In this case - you don't have to do anything, the calibration will automatically be applied. 
 
 If you'd like to replace that calibration with a new file, you can still add one to override the existing.
 
@@ -46,7 +50,7 @@ You'll see some placeholder graphs and new controls appear. Click **Load Data** 
 
 You can use the **Next** and **Previous** buttons or arrow keys to navigate through your images.
 
-If your images are not timestamp synchronized from all instruments to within 5 ms, a placeholder image will be shown for the missing data.
+If your images are not timestamp synchronized from all instruments to within 5 ms, there will be a warning at the top of the screen, and a placeholder image will be shown for the missing data.
 
 ## Annotating the Dataset
 
