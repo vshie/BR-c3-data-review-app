@@ -27,7 +27,7 @@ logger = logging.getLogger("__main__")
 logger.setLevel(logging.INFO)
 
 
-MOUNT_POINT = "/mnt/data"
+MOUNT_POINT = "/app/data"
 
 external_stylesheets = [
     dbc.themes.BOOTSTRAP,
@@ -693,6 +693,21 @@ def show_alert(all_alerts, stereo_alerts, color_alerts):
     else:
         raise PreventUpdate
 
+
+# BlueOS Extension Service Registration
+@app.server.route('/register_service')
+def register_service():
+    return '''
+    {
+        "name": "C3 Data Review App",
+        "description": "A web-based tool for reviewing and annotating camera data from C3 surveys. Supports stereo and color camera data analysis with calibration support.",
+        "icon": "mdi-camera-multiple",
+        "company": "Blue Robotics",
+        "version": "1.0.0",
+        "webpage": "https://github.com/vshie/BR-c3-data-review-app",
+        "api": "https://github.com/bluerobotics/BlueOS-docker"
+    }
+    '''
 
 if __name__ == "__main__":
     # To run with the development server (for debugging, etc.):

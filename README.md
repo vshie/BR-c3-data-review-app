@@ -1,41 +1,98 @@
-# C3 Data Review App
+# C3 Data Review App - BlueOS Extension
+
+A BlueOS extension for reviewing and annotating camera data from C3 surveys. This web-based tool supports stereo and color camera data analysis with calibration support.
 
 For usage, see the official documentation at: [C3 Data Review App](https://github.com/vshie/BR-c3-data-review-app)
 
+## BlueOS Extension Installation
+
+This application is designed to run as a BlueOS extension. To install:
+
+1. **Via BlueOS Extensions Manager** (when available in the Bazaar):
+   - Open BlueOS web interface
+   - Navigate to Extensions Manager
+   - Search for "C3 Data Review App"
+   - Click Install
+
+2. **Manual Installation**:
+   - Go to Extensions Manager → Installed tab
+   - Click the "+" icon
+   - Enter the following information:
+     - **Extension Identifier**: `vshie.br-c3-data-review-app`
+     - **Extension Name**: `C3 Data Review App`
+     - **Docker image**: `vshie/br-c3-data-review-app`
+     - **Docker tag**: `latest`
+     - **Custom settings**: 
+       ```json
+       {
+         "ExposedPorts": {
+           "8050/tcp": {}
+         },
+         "HostConfig": {
+           "Binds": [
+             "/usr/blueos/extensions/c3-data-review:/app/data"
+           ],
+           "ExtraHosts": ["host.docker.internal:host-gateway"],
+           "PortBindings": {
+             "8050/tcp": [
+               {
+                 "HostPort": ""
+               }
+             ]
+           },
+           "NetworkMode": "host"
+         }
+       }
+       ```
 
 ## Prerequisites
-If running with Docker, this system requires Docker to be installed
-If running with Python, this system requires Python 3+.
+- BlueOS running on compatible hardware
+- Camera data in the expected directory structure (left/, right/, center/ or Oak1Left/, Oak1Right/, Oak1Center/)
 
-## Installation
+## Usage
 
-There are two ways to run this application:
-1. Building and running a docker image
-2. Running the python *app.py* script locally
+1. **Data Preparation**: Place your camera data in the mounted data directory (`/usr/blueos/extensions/c3-data-review/` on the host)
+2. **Access the App**: The extension will appear in the BlueOS sidebar once installed and running
+3. **Load Data**: Use the dropdown to select your dataset folder
+4. **Review Images**: Navigate through stereo, color, or all camera views
+5. **Annotate**: Use the drawing tools to annotate images
+6. **Export**: Download your annotations as CSV files
 
-### To run with Docker: 
+## Data Structure
+
+The app expects camera data in one of these structures:
+- `left/`, `right/`, `center/` (for standard stereo + color setup)
+- `Oak1Left/`, `Oak1Right/`, `Oak1Center/` (for Oak camera naming convention)
+
+Each directory should contain timestamped image files (`.jpg` format).
+
+## Features
+
+- **Multi-camera Support**: View stereo pairs and color images simultaneously
+- **Calibration Support**: Upload and use camera calibration files
+- **Image Rectification**: Toggle rectified/unrectified views
+- **Annotation Tools**: Draw lines, rectangles, and shapes on images
+- **Export Functionality**: Download annotations as CSV files
+- **Responsive Interface**: Works on various screen sizes
+
+## Development
+
+### Building the Extension
+
+```bash
+# Build the Docker image
+docker build -t vshie/br-c3-data-review-app .
+
+# Run locally for testing
+docker run -p 8050:8050 -v /path/to/your/data:/app/data vshie/br-c3-data-review-app
+```
+
+### Local Development
+
+If running with Python directly (for development):
+
 1. Clone the git directory
-2. Navigate to the directory
-3. Build the docker image:  
-`docker build -t c3-data-review-app .`
-4. Run the docker image  
-
-You'll need to change the volume mounts to match your filesystem and platform. It is recommended that you mount the folder that contains all of your datasets. For example, the folder */data/c3-app* might contain multiple dataset folders: */data/c3-app/c3-survey-1* and */data/c3-app/c3-survey-2*. Note: If you mount a folder with too many subdirectories, it may take a while for the app to load.
-
-  | Platform           | Command Example                                                     |
-  | ------------------ | ------------------------------------------------------------------- |
-  | Linux/macOS        | `docker run -p 8050:8050 -v /data/c3-app:/mnt/data c3-data-review-app`    |
-  | Windows CMD        | `docker run -p 8050:8050 -v C:\data\c3-app:/mnt/data c3-data-review-app`  |
-  | Windows PowerShell | `docker run -p 8050:8050 -v //c/data/c3-app:/mnt/data c3-data-review-app` |
-    
-  The available folders from the mounted directory will be listed in dropdown for data selection. If the desired folder is not shown, please revisit the directory mounting instructions.
-
-5. Navigate to `http://localhost:8050/ or http://127.0.0.1:8050/` to open the app.
-
-### To run locally:
-1. Clone the git directory
-2. Navigate to the directory
-3. Navigate to the *app/* folder
-4. Create a virtual python environment and install the required packages in *requirements.txt*, or install the packages with your global python distribution (not recommended).
-5. Run the python file *app.py*
-6. Navigate to `http://localhost:8050/ or http://127.0.0.1:8050/` to open the app.
+2. Navigate to the *app/* folder
+3. Create a virtual python environment and install the required packages in *requirements.txt*
+4. Run the python file *app.py*
+5. Navigate to `http://localhost:8050/` to open the app

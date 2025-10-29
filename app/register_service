@@ -1,0 +1,9 @@
+{
+    "name": "C3 Data Review App",
+    "description": "A web-based tool for reviewing and annotating camera data from C3 surveys. Supports stereo and color camera data analysis with calibration support.",
+    "icon": "mdi-camera-multiple",
+    "company": "Blue Robotics",
+    "version": "1.0.0",
+    "webpage": "https://github.com/vshie/BR-c3-data-review-app",
+    "api": "https://github.com/bluerobotics/BlueOS-docker"
+}
