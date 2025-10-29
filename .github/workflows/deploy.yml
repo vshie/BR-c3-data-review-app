@@ -14,6 +14,15 @@ jobs:
   deploy-docker-image:
     runs-on: ubuntu-latest
     steps:
+      - name: Debug secrets and variables
+        run: |
+          echo "DOCKER_USERNAME is set: ${{ secrets.DOCKER_USERNAME != '' }}"
+          echo "DOCKER_PASSWORD is set: ${{ secrets.DOCKER_PASSWORD != '' }}"
+          echo "MY_NAME: ${{ vars.MY_NAME }}"
+          echo "MY_EMAIL: ${{ vars.MY_EMAIL }}"
+          echo "ORG_NAME: ${{ vars.ORG_NAME }}"
+          echo "ORG_EMAIL: ${{ vars.ORG_EMAIL }}"
+
       - name: Clear Docker cache
         run: |
           docker builder prune -f
