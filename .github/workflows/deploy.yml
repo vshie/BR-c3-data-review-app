@@ -1,26 +1,32 @@
-name: Build and Deploy BlueOS Extension
+name: Deploy BlueOS Extension Image
 
 on:
+  # Automatically run when a new commit is added to the repository
   push:
-    branches:
-      - main
-    tags:
-      - '*'
+  # Automatically run when someone makes a Pull Request to the repository
+  #pull_request:
+  # Run manually
+  #workflow_dispatch:
+  # NOTE: caches may be removed if not run weekly
+  #  -> may be worth scheduling for every 6 days
 
 jobs:
-  build:
+  deploy-docker-image:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Clear Docker cache
+        run: |
+          docker builder prune -f
+          docker buildx prune -f
 
       - name: Deploy BlueOS Extension
         uses: BlueOS-community/Deploy-BlueOS-Extension@v1.2.0
         with:
-          docker_username: ${{ secrets.DOCKER_USERNAME }}
-          docker_password: ${{ secrets.DOCKER_PASSWORD }}
-          image_name: ${{ vars.IMAGE_NAME }}
-          my_email: ${{ vars.MY_EMAIL }}
-          my_name: ${{ vars.MY_NAME }}
-          org_email: ${{ vars.ORG_EMAIL }}
-          org_name: ${{ vars.ORG_NAME }}
+          docker-username: ${{ secrets.DOCKER_USERNAME }}
+          docker-password: ${{ secrets.DOCKER_PASSWORD }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          image-name: 'br-c3-data-review-app'          
+          author: ${{ vars.MY_NAME }}
+          author-email: ${{ vars.MY_EMAIL }}
+          maintainer: ${{ vars.ORG_NAME }}
+          maintainer-email: ${{ vars.ORG_EMAIL }}

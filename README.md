@@ -86,7 +86,6 @@ The extension uses the official BlueOS deployment action for automated builds. T
    - `DOCKER_PASSWORD`: Your Docker Hub access token
 
 2. **Configure GitHub Variables** (in repository settings):
-   - `IMAGE_NAME`: `vshie/br-c3-data-review-app`
    - `MY_EMAIL`: `tonywhite@bluerobotics.com`
    - `MY_NAME`: `Tony White`
    - `ORG_EMAIL`: `support@bluerobotics.com`
