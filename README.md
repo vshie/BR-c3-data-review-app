@@ -79,13 +79,27 @@ Each directory should contain timestamped image files (`.jpg` format).
 
 ### Building the Extension
 
-```bash
-# Build the Docker image
-docker build -t vshie/br-c3-data-review-app .
+The extension uses the official BlueOS deployment action for automated builds. To set up automated deployment:
 
-# Run locally for testing
-docker run -p 8050:8050 -v /path/to/your/data:/app/data vshie/br-c3-data-review-app
-```
+1. **Configure GitHub Secrets** (in repository settings):
+   - `DOCKER_USERNAME`: Your Docker Hub username
+   - `DOCKER_PASSWORD`: Your Docker Hub access token
+
+2. **Configure GitHub Variables** (in repository settings):
+   - `IMAGE_NAME`: `vshie/br-c3-data-review-app`
+   - `MY_EMAIL`: `tonywhite@bluerobotics.com`
+   - `MY_NAME`: `Tony White`
+   - `ORG_EMAIL`: `support@bluerobotics.com`
+   - `ORG_NAME`: `Blue Robotics`
+
+3. **Manual Build** (for local testing):
+   ```bash
+   # Build the Docker image
+   docker build -t vshie/br-c3-data-review-app .
+
+   # Run locally for testing
+   docker run -p 8050:8050 -v /path/to/your/data:/app/data vshie/br-c3-data-review-app
+   ```
 
 ### Local Development
 
