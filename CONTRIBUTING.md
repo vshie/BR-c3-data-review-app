@@ -12,7 +12,7 @@ Thank you for your interest in contributing to the project! We welcome all contr
 
 ## 📝 Bug Reports
 
-To submit a bug report, please use the issues tab on the Gitlab repository. Please include:
+To submit a bug report, please use the issues tab on the GitHub repository. Please include:
 
 - A clear and descriptive title
 - A detailed description of the bug
@@ -22,7 +22,7 @@ To submit a bug report, please use the issues tab on the Gitlab repository. Plea
 
 ## 📦 Feature Request
 
-To submit a feature request, please use the issues tab on the Gitlab repository. Please include:
+To submit a feature request, please use the issues tab on the GitHub repository. Please include:
 
 - A clear and descriptive title
 - A detailed description of the feature

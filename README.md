@@ -1,6 +1,6 @@
 # C3 Data Review App
 
-For usage, see the official documentation at: [C3 Data Review App](https://c3-data-review-app-157680.gitlab.io/)
+For usage, see the official documentation at: [C3 Data Review App](https://github.com/vshie/BR-c3-data-review-app)
 
 
 ## Prerequisites
